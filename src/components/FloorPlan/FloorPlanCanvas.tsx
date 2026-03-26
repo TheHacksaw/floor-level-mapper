@@ -145,6 +145,22 @@ export function FloorPlanCanvas() {
     [project?.shape, updateProjectShape]
   );
 
+  // Handle vertex removal (double-tap on edit handle)
+  const handleVertexRemove = useCallback(
+    (vertexIndex: number) => {
+      if (!project?.shape || project.shape.type !== 'polygon') return;
+      if (project.shape.vertices.length <= 3) return; // need at least 3 vertices
+      const newVerts = project.shape.vertices.filter((_, i) => i !== vertexIndex);
+      const walls = newVerts.map((_, i) => ({
+        from: i,
+        to: (i + 1) % newVerts.length,
+        length: Math.round(distanceBetween(newVerts[i], newVerts[(i + 1) % newVerts.length])),
+      }));
+      updateProjectShape({ type: 'polygon', vertices: newVerts, walls });
+    },
+    [project?.shape, updateProjectShape]
+  );
+
   // Handle wall tap for editing wall length
   const handleWallTap = useCallback((wallIndex: number) => {
     if (mode !== 'draw') return;
@@ -333,6 +349,7 @@ export function FloorPlanCanvas() {
               editable={mode === 'draw'}
               onWallTap={handleWallTap}
               onVertexDragEnd={handleVertexDragEnd}
+              onVertexRemove={handleVertexRemove}
             />
           )}
 
@@ -437,7 +454,7 @@ export function FloorPlanCanvas() {
       {mode === 'draw' && hasShape && (
         <div className="drawing-controls">
           <span className="drawing-hint">
-            Drag vertices to reshape · Tap wall dimensions to edit
+            Drag vertices · Double-tap to remove · Tap wall to edit length
           </span>
         </div>
       )}

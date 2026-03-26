@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Line, Rect, Text, Group, Circle } from 'react-konva';
 import type { FloorPlanShape as ShapeType, Point2D } from '../../types';
 import { getShapeVertices, wallMidpoint, distanceBetween } from '../../lib/geometry';
@@ -9,9 +10,10 @@ interface Props {
   onWallTap?: (wallIndex: number) => void;
   onVertexDrag?: (vertexIndex: number, newPos: Point2D) => void;
   onVertexDragEnd?: (vertexIndex: number, newPos: Point2D) => void;
+  onVertexRemove?: (vertexIndex: number) => void;
 }
 
-export function FloorPlanShapeRenderer({ shape, scale, editable, onWallTap, onVertexDrag, onVertexDragEnd }: Props) {
+export function FloorPlanShapeRenderer({ shape, scale, editable, onWallTap, onVertexDrag, onVertexDragEnd, onVertexRemove }: Props) {
   const vertices = getShapeVertices(shape);
 
   if (shape.type === 'rectangle') {
@@ -33,6 +35,7 @@ export function FloorPlanShapeRenderer({ shape, scale, editable, onWallTap, onVe
             scale={scale}
             onVertexDrag={onVertexDrag}
             onVertexDragEnd={onVertexDragEnd}
+            canRemove={false}
           />
         )}
       </Group>
@@ -59,6 +62,8 @@ export function FloorPlanShapeRenderer({ shape, scale, editable, onWallTap, onVe
           scale={scale}
           onVertexDrag={onVertexDrag}
           onVertexDragEnd={onVertexDragEnd}
+          onVertexRemove={onVertexRemove}
+          canRemove={vertices.length > 3}
         />
       )}
     </Group>
@@ -70,13 +75,32 @@ function EditHandles({
   scale,
   onVertexDrag,
   onVertexDragEnd,
+  onVertexRemove,
+  canRemove,
 }: {
   vertices: Point2D[];
   scale: number;
   onVertexDrag?: (vertexIndex: number, newPos: Point2D) => void;
   onVertexDragEnd?: (vertexIndex: number, newPos: Point2D) => void;
+  onVertexRemove?: (vertexIndex: number) => void;
+  canRemove?: boolean;
 }) {
   const handleRadius = Math.max(8, 10 / scale);
+  const lastTapRef = useRef<{ time: number; index: number }>({ time: 0, index: -1 });
+
+  const handleTap = (index: number) => {
+    const now = Date.now();
+    if (
+      canRemove &&
+      lastTapRef.current.index === index &&
+      now - lastTapRef.current.time < 400
+    ) {
+      onVertexRemove?.(index);
+      lastTapRef.current = { time: 0, index: -1 };
+    } else {
+      lastTapRef.current = { time: now, index };
+    }
+  };
 
   return (
     <>
@@ -96,6 +120,8 @@ function EditHandles({
           onDragEnd={(e) => {
             onVertexDragEnd?.(i, { x: e.target.x(), y: e.target.y() });
           }}
+          onClick={() => handleTap(i)}
+          onTap={() => handleTap(i)}
           hitStrokeWidth={10 / scale}
         />
       ))}
