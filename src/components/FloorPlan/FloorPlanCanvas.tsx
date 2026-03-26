@@ -261,23 +261,28 @@ export function FloorPlanCanvas() {
 
   const handleStageTouchStart = useCallback(
     (e: KonvaEventObject<TouchEvent>) => {
-      if (mode !== 'draw' && e.evt.touches.length === 1) {
+      // Single-finger pan in measure/heatmap modes, or draw mode when shape exists
+      const canPan = mode !== 'draw' || hasShape;
+      if (canPan && e.evt.touches.length === 1) {
         const touch = e.evt.touches[0];
         startPan(touch.clientX, touch.clientY);
       }
     },
-    [mode, startPan]
+    [mode, hasShape, startPan]
   );
 
   const handleStageTouchMove = useCallback(
     (e: KonvaEventObject<TouchEvent>) => {
+      // Two-finger gestures always work in ALL modes
       handleTouchMove(e);
-      if (mode !== 'draw' && e.evt.touches.length === 1) {
+      // Single-finger pan
+      const canPan = mode !== 'draw' || hasShape;
+      if (canPan && e.evt.touches.length === 1) {
         const touch = e.evt.touches[0];
         movePan(touch.clientX, touch.clientY);
       }
     },
-    [mode, handleTouchMove, movePan]
+    [mode, hasShape, handleTouchMove, movePan]
   );
 
   // Confirm tentative point (user taps it again)
@@ -423,7 +428,7 @@ export function FloorPlanCanvas() {
             Cancel
           </button>
           <span className="drawing-hint">
-            {drawingTool.vertexCount} points · Hold Shift to snap H/V
+            {drawingTool.vertexCount} points · Auto-snaps H/V · Double-tap to remove
           </span>
         </div>
       )}

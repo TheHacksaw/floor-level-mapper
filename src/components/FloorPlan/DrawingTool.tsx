@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Line, Circle, Group, Text } from 'react-konva';
 import type { Point2D } from '../../types';
 import { distanceBetween } from '../../lib/geometry';
@@ -11,16 +11,39 @@ interface Props {
 }
 
 const CLOSE_THRESHOLD_PX = 20;
+const SNAP_ANGLE_THRESHOLD_PX = 15; // proximity snap within 15 screen pixels of H/V axis
+const DOUBLE_TAP_MS = 400;
+const DOUBLE_TAP_DIST_PX = 30;
 
-export function snapToAxis(point: Point2D, lastPoint: Point2D | null, shiftHeld: boolean): Point2D {
-  if (!shiftHeld || !lastPoint) return point;
+/** Snap to H/V axis of last point. Forced when shift held, or auto when close enough. */
+export function snapToAxis(
+  point: Point2D,
+  lastPoint: Point2D | null,
+  shiftHeld: boolean,
+  scale: number
+): Point2D {
+  if (!lastPoint) return point;
   const dx = Math.abs(point.x - lastPoint.x);
   const dy = Math.abs(point.y - lastPoint.y);
-  if (dx > dy) {
+  const dxScreen = dx * scale;
+  const dyScreen = dy * scale;
+
+  if (shiftHeld) {
+    // Force snap
+    return dxScreen > dyScreen
+      ? { x: point.x, y: lastPoint.y }
+      : { x: lastPoint.x, y: point.y };
+  }
+
+  // Proximity snap: if within threshold of being perfectly H or V, snap it
+  if (dyScreen < SNAP_ANGLE_THRESHOLD_PX && dxScreen > SNAP_ANGLE_THRESHOLD_PX * 2) {
     return { x: point.x, y: lastPoint.y }; // snap horizontal
-  } else {
+  }
+  if (dxScreen < SNAP_ANGLE_THRESHOLD_PX && dyScreen > SNAP_ANGLE_THRESHOLD_PX * 2) {
     return { x: lastPoint.x, y: point.y }; // snap vertical
   }
+
+  return point;
 }
 
 export function DrawingTool({ scale, onComplete, shiftHeld }: Props) {
@@ -28,12 +51,45 @@ export function DrawingTool({ scale, onComplete, shiftHeld }: Props) {
   const [cursorPos, setCursorPos] = useState<Point2D | null>(null);
   const updateProjectShape = useProjectStore((s) => s.updateProjectShape);
 
+  // Double-tap tracking
+  const lastTapTime = useRef(0);
+  const lastTapPos = useRef<Point2D | null>(null);
+
   const lastVertex = vertices.length > 0 ? vertices[vertices.length - 1] : null;
 
   const handleCanvasTap = useCallback(
     (worldX: number, worldY: number) => {
-      let newPoint: Point2D = { x: worldX, y: worldY };
-      newPoint = snapToAxis(newPoint, lastVertex, shiftHeld);
+      const now = Date.now();
+      const tapPos = { x: worldX, y: worldY };
+
+      // Check for double-tap to remove nearest vertex
+      if (
+        lastTapPos.current &&
+        now - lastTapTime.current < DOUBLE_TAP_MS &&
+        distanceBetween(tapPos, lastTapPos.current) * scale < DOUBLE_TAP_DIST_PX
+      ) {
+        // Find nearest vertex within threshold
+        let nearestIdx = -1;
+        let nearestDist = Infinity;
+        for (let i = 0; i < vertices.length; i++) {
+          const d = distanceBetween(tapPos, vertices[i]) * scale;
+          if (d < DOUBLE_TAP_DIST_PX && d < nearestDist) {
+            nearestDist = d;
+            nearestIdx = i;
+          }
+        }
+        if (nearestIdx >= 0) {
+          setVertices((prev) => prev.filter((_, i) => i !== nearestIdx));
+          lastTapTime.current = 0; // reset so triple-tap doesn't trigger
+          lastTapPos.current = null;
+          return;
+        }
+      }
+
+      lastTapTime.current = now;
+      lastTapPos.current = tapPos;
+
+      let newPoint = snapToAxis(tapPos, lastVertex, shiftHeld, scale);
 
       // Check if closing the polygon
       if (vertices.length >= 3) {
@@ -58,9 +114,9 @@ export function DrawingTool({ scale, onComplete, shiftHeld }: Props) {
 
   const handleCursorMove = useCallback((worldX: number, worldY: number) => {
     let pos: Point2D = { x: worldX, y: worldY };
-    pos = snapToAxis(pos, lastVertex, shiftHeld);
+    pos = snapToAxis(pos, lastVertex, shiftHeld, scale);
     setCursorPos(pos);
-  }, [lastVertex, shiftHeld]);
+  }, [lastVertex, shiftHeld, scale]);
 
   const undoLastPoint = useCallback(() => {
     setVertices((prev) => prev.slice(0, -1));
@@ -85,9 +141,23 @@ export function DrawingTool({ scale, onComplete, shiftHeld }: Props) {
     vertices.length >= 3 &&
     distanceBetween(cursorPos, vertices[0]) * scale < CLOSE_THRESHOLD_PX;
 
+  // Check if cursor is snapped (for visual feedback)
+  const isSnapped = cursorPos && lastVertex && (
+    cursorPos.x === lastVertex.x || cursorPos.y === lastVertex.y
+  );
+
   return {
     element: (
       <Group>
+        {/* Snap guide lines */}
+        {isSnapped && cursorPos && lastVertex && (
+          <Line
+            points={[lastVertex.x, lastVertex.y, cursorPos.x, cursorPos.y]}
+            stroke="rgba(76, 175, 80, 0.4)"
+            strokeWidth={1 / scale}
+          />
+        )}
+
         {linePoints.length >= 4 && (
           <Line
             points={linePoints}

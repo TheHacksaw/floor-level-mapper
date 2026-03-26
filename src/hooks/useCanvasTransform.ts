@@ -18,6 +18,8 @@ export function useCanvasTransform(initialScale = 0.1) {
   const lastPinchCenter = useRef<{ x: number; y: number } | null>(null);
   const isDragging = useRef(false);
   const lastDragPos = useRef<{ x: number; y: number } | null>(null);
+  // Track whether a two-finger gesture is active (to suppress single-tap after pinch)
+  const wasPinching = useRef(false);
 
   const handleWheel = useCallback((e: KonvaEventObject<WheelEvent>) => {
     e.evt.preventDefault();
@@ -27,27 +29,54 @@ export function useCanvasTransform(initialScale = 0.1) {
     const pointer = stage.getPointerPosition();
     if (!pointer) return;
 
-    const scaleBy = 1.1;
-    const direction = e.evt.deltaY < 0 ? 1 : -1;
-
-    setTransform((prev) => {
-      const newScale = direction > 0 ? prev.scale * scaleBy : prev.scale / scaleBy;
-      const clampedScale = Math.max(0.01, Math.min(2, newScale));
-
-      // Zoom toward pointer position
-      const mouseX = pointer.x;
-      const mouseY = pointer.y;
-      const newOffsetX = mouseX - ((mouseX - prev.offsetX) / prev.scale) * clampedScale;
-      const newOffsetY = mouseY - ((mouseY - prev.offsetY) / prev.scale) * clampedScale;
-
-      return { scale: clampedScale, offsetX: newOffsetX, offsetY: newOffsetY };
-    });
+    // Trackpad two-finger scroll: ctrlKey is set for pinch-zoom, otherwise it's a pan
+    if (e.evt.ctrlKey) {
+      // Pinch zoom on trackpad
+      const scaleBy = 1.01;
+      const direction = e.evt.deltaY < 0 ? 1 : -1;
+      setTransform((prev) => {
+        const factor = direction > 0 ? scaleBy ** Math.abs(e.evt.deltaY) : (1 / scaleBy) ** Math.abs(e.evt.deltaY);
+        const newScale = Math.max(0.01, Math.min(2, prev.scale * factor));
+        const mouseX = pointer.x;
+        const mouseY = pointer.y;
+        const newOffsetX = mouseX - ((mouseX - prev.offsetX) / prev.scale) * newScale;
+        const newOffsetY = mouseY - ((mouseY - prev.offsetY) / prev.scale) * newScale;
+        return { scale: newScale, offsetX: newOffsetX, offsetY: newOffsetY };
+      });
+    } else {
+      // Two-finger scroll = pan, scroll wheel = zoom
+      const isTrackpad = Math.abs(e.evt.deltaY) < 50 && !Number.isInteger(e.evt.deltaY);
+      if (isTrackpad || e.evt.deltaX !== 0) {
+        // Pan
+        setTransform((prev) => ({
+          ...prev,
+          offsetX: prev.offsetX - e.evt.deltaX,
+          offsetY: prev.offsetY - e.evt.deltaY,
+        }));
+      } else {
+        // Mouse wheel zoom
+        const scaleBy = 1.1;
+        const direction = e.evt.deltaY < 0 ? 1 : -1;
+        setTransform((prev) => {
+          const newScale = direction > 0 ? prev.scale * scaleBy : prev.scale / scaleBy;
+          const clampedScale = Math.max(0.01, Math.min(2, newScale));
+          const mouseX = pointer.x;
+          const mouseY = pointer.y;
+          const newOffsetX = mouseX - ((mouseX - prev.offsetX) / prev.scale) * clampedScale;
+          const newOffsetY = mouseY - ((mouseY - prev.offsetY) / prev.scale) * clampedScale;
+          return { scale: clampedScale, offsetX: newOffsetX, offsetY: newOffsetY };
+        });
+      }
+    }
   }, []);
 
+  // Two-finger touch: pinch-zoom AND pan simultaneously
   const handleTouchMove = useCallback((e: KonvaEventObject<TouchEvent>) => {
     const touches = e.evt.touches;
     if (touches.length === 2) {
       e.evt.preventDefault();
+      wasPinching.current = true;
+
       const dx = touches[0].clientX - touches[1].clientX;
       const dy = touches[0].clientY - touches[1].clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
@@ -56,10 +85,14 @@ export function useCanvasTransform(initialScale = 0.1) {
 
       if (lastPinchDist.current !== null && lastPinchCenter.current) {
         const scaleFactor = dist / lastPinchDist.current;
+        const panDx = cx - lastPinchCenter.current.x;
+        const panDy = cy - lastPinchCenter.current.y;
+
         setTransform((prev) => {
           const newScale = Math.max(0.01, Math.min(2, prev.scale * scaleFactor));
-          const newOffsetX = cx - ((cx - prev.offsetX) / prev.scale) * newScale;
-          const newOffsetY = cy - ((cy - prev.offsetY) / prev.scale) * newScale;
+          // Zoom toward pinch center + pan with finger movement
+          const newOffsetX = cx - ((cx - prev.offsetX) / prev.scale) * newScale + panDx;
+          const newOffsetY = cy - ((cy - prev.offsetY) / prev.scale) * newScale + panDy;
           return { scale: newScale, offsetX: newOffsetX, offsetY: newOffsetY };
         });
       }
@@ -74,10 +107,11 @@ export function useCanvasTransform(initialScale = 0.1) {
     lastPinchCenter.current = null;
     isDragging.current = false;
     lastDragPos.current = null;
+    // Reset pinching flag after a short delay (so the tap handler can check it)
+    setTimeout(() => { wasPinching.current = false; }, 100);
   }, []);
 
   const handleMouseDown = useCallback((e: KonvaEventObject<MouseEvent>) => {
-    // Right-click or middle-click for panning
     if (e.evt.button === 1 || e.evt.button === 2) {
       isDragging.current = true;
       lastDragPos.current = { x: e.evt.clientX, y: e.evt.clientY };
@@ -103,7 +137,6 @@ export function useCanvasTransform(initialScale = 0.1) {
     lastDragPos.current = null;
   }, []);
 
-  // Single-finger pan for non-draw modes
   const startPan = useCallback((x: number, y: number) => {
     isDragging.current = true;
     lastDragPos.current = { x, y };
@@ -150,5 +183,6 @@ export function useCanvasTransform(initialScale = 0.1) {
     movePan,
     endPan,
     fitToView,
+    wasPinching,
   };
 }
