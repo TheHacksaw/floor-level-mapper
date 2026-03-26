@@ -407,7 +407,6 @@ export function FloorPlanCanvas() {
               toleranceMm={project?.settings.toleranceMm ?? 5}
               toleranceOverMm={project?.settings.toleranceOverMm ?? 3000}
               targetHeight={project?.settings.targetHeight}
-              scale={transform.scale}
               canvasWidth={size.width}
             />
           </Layer>

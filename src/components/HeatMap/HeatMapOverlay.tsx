@@ -14,7 +14,7 @@ interface Props {
   targetHeight?: number | null;
 }
 
-export function HeatMapOverlay({ image, result, spots, toleranceZones = [], scale, measurements = [], toleranceMm, toleranceOverMm, targetHeight }: Props) {
+export function HeatMapOverlay({ image, result, spots, toleranceZones = [], scale, measurements = [], targetHeight }: Props) {
   if (!image || !result) return null;
 
   const { bounds, cols, rows, cellSize, mean } = result;
@@ -151,7 +151,6 @@ export function HeatMapLegend({
   toleranceMm,
   toleranceOverMm,
   targetHeight,
-  scale,
   canvasWidth,
 }: {
   min: number;
@@ -160,7 +159,6 @@ export function HeatMapLegend({
   toleranceMm: number;
   toleranceOverMm: number;
   targetHeight?: number | null;
-  scale: number;
   canvasWidth: number;
 }) {
   const target = targetHeight ?? mean;

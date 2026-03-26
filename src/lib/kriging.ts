@@ -106,13 +106,12 @@ export interface SpotInfo {
 export function findHighLowSpots(
   result: KrigingResult,
   toleranceMm: number = 5,
-  toleranceOverMm: number = 3000,
+  _toleranceOverMm?: number,
   targetHeight?: number | null
 ): SpotInfo[] {
   const spots: SpotInfo[] = [];
   const { grid, bounds, cellSize, rows, cols, mean } = result;
   const target = targetHeight ?? mean;
-  const maxSlope = toleranceMm / toleranceOverMm;
 
   for (let r = 1; r < rows - 1; r++) {
     for (let c = 1; c < cols - 1; c++) {
@@ -317,7 +316,6 @@ function chainEdges(edges: [number, number, number, number][]): number[] {
   // Walk the chain starting from the first edge
   const used = new Set<number>();
   const result: number[] = [];
-  let currentEdge = 0;
   used.add(0);
   const [sx, sy, ex, ey] = edges[0];
   result.push(sx, sy, ex, ey);
