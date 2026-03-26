@@ -1,0 +1,603 @@
+/* ============================================
+   Floor Level Mapper — Styles
+   ============================================ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg: #1a1a2e;
+  --bg-surface: #16213e;
+  --bg-elevated: #0f3460;
+  --text: #e0e0e0;
+  --text-muted: #a0a0a0;
+  --primary: #4fc3f7;
+  --primary-dark: #0288d1;
+  --danger: #ef5350;
+  --success: #66bb6a;
+  --border: #2a2a4a;
+  --radius: 8px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow: hidden;
+  height: 100dvh;
+  width: 100vw;
+}
+
+#root {
+  height: 100dvh;
+  width: 100vw;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+/* ---- Header ---- */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  min-height: 48px;
+  flex-shrink: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.app-title {
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-right {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 6px 8px;
+  }
+  .app-title {
+    font-size: 14px;
+  }
+  .btn-sm, .btn-primary-sm {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+}
+
+/* ---- Toolbar ---- */
+.toolbar {
+  display: flex;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.toolbar-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 12px;
+}
+
+.toolbar-btn.active {
+  color: var(--primary);
+  background: rgba(79, 195, 247, 0.1);
+  border-bottom: 2px solid var(--primary);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.toolbar-icon {
+  font-size: 20px;
+}
+
+.toolbar-label {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* ---- Main area ---- */
+.app-main {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ---- Canvas ---- */
+.canvas-container {
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  background: #0d1b2a;
+  position: relative;
+}
+
+/* ---- Drawing controls overlay ---- */
+.drawing-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: rgba(22, 33, 62, 0.95);
+  padding: 8px 16px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.drawing-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---- Measure status ---- */
+.measure-status {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: var(--text-muted);
+  background: rgba(22, 33, 62, 0.9);
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+}
+
+/* ---- Heatmap warning ---- */
+.heatmap-warning {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  background: rgba(22, 33, 62, 0.95);
+  padding: 16px 24px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+/* ---- Empty state ---- */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 24px;
+}
+
+.empty-state h2 {
+  font-size: 24px;
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.empty-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* ---- Buttons ---- */
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-sm,
+.btn-primary-sm,
+.btn-danger-sm,
+.btn-icon {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: var(--radius);
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #000;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.btn-primary:hover { background: var(--primary-dark); color: #fff; }
+
+.btn-secondary {
+  background: var(--bg-elevated);
+  color: var(--text);
+  padding: 10px 20px;
+  font-size: 14px;
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover { background: var(--border); }
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  padding: 10px 20px;
+  font-size: 14px;
+}
+
+.btn-sm {
+  background: var(--bg-elevated);
+  color: var(--text);
+  padding: 6px 12px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+}
+
+.btn-primary-sm {
+  background: var(--primary);
+  color: #000;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.btn-danger-sm {
+  background: transparent;
+  color: var(--danger);
+  padding: 4px 8px;
+  font-size: 14px;
+}
+
+.btn-icon {
+  background: transparent;
+  color: var(--text);
+  padding: 8px;
+  font-size: 18px;
+  line-height: 1;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- Dialog / Overlay ---- */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.dialog {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 420px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.dialog h2 {
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* ---- Form fields ---- */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.field span {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.field input,
+.field select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 16px;
+  font-family: inherit;
+  outline: none;
+}
+
+.field input:focus {
+  border-color: var(--primary);
+}
+
+.field-inline {
+  flex: 1;
+}
+
+.coord-fields {
+  display: flex;
+  gap: 8px;
+}
+
+.dimension-inputs {
+  display: flex;
+  gap: 12px;
+}
+
+.dimension-inputs .field {
+  flex: 1;
+}
+
+.large-input {
+  font-size: 24px !important;
+  text-align: center;
+  padding: 14px !important;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+/* ---- Shape toggle ---- */
+.shape-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.shape-toggle button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: var(--bg);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.2s;
+}
+
+.shape-toggle button.active {
+  background: var(--bg-elevated);
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ---- Project list ---- */
+.project-list h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.project-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--bg);
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.project-item:hover {
+  border-color: var(--border);
+}
+
+.project-item.active {
+  border-color: var(--primary);
+  background: rgba(79, 195, 247, 0.05);
+}
+
+.project-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.project-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ---- Bottom sheet ---- */
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 1001;
+  display: flex;
+  align-items: flex-end;
+}
+
+.bottom-sheet {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border);
+  border-radius: 16px 16px 0 0;
+  padding: 12px 20px 24px;
+  width: 100%;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.bottom-sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 0 auto 12px;
+}
+
+.bottom-sheet-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.bottom-sheet-content {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Measurement form ---- */
+.measurement-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.measurement-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.measurement-actions .btn-danger {
+  margin-right: auto;
+}
+
+/* ---- Tolerance control ---- */
+.tolerance-control {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  background: rgba(22, 33, 62, 0.95);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tolerance-control label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.tolerance-control select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.tolerance-control select:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.tolerance-control input {
+  width: 60px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 14px;
+  text-align: center;
+  font-family: inherit;
+}
+
+.tolerance-control input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.tolerance-summary {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.zone-badge {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.zone-high {
+  background: rgba(255, 23, 68, 0.2);
+  color: #ff5252;
+}
+
+.zone-low {
+  background: rgba(41, 121, 255, 0.2);
+  color: #82b1ff;
+}
+
+.zone-ok {
+  background: rgba(102, 187, 106, 0.2);
+  color: #66bb6a;
+}
